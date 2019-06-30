@@ -1,0 +1,6 @@
+﻿GET : DB -> 받는다.
+http://www.example.com/api/GetBookList/3
+http://www.example.com/api/GetBookList?bookNo=1
+
+POST : DB <- 전달
+헤더와 바디 부분의 정보를 전달한다 Url 정보가 보이지 않는다. 

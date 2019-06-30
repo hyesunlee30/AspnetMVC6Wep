@@ -1,0 +1,20 @@
+﻿
+//데이터의 명령문만 만들었다.
+add-migration FirstMigration
+
+//실제 반영
+update-database
+
+migration에 수정사항이 있을 떄에는 
+
+//add-migration SecondMigration
+
+//다시 반영
+update-database
+
+//다시 원복
+
+add-migration ThirdMigration
+
+//다시 반영
+update-database

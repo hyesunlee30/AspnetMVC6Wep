@@ -30,10 +30,22 @@ namespace AspnetNote.MVC6.Controllers
                     var list = db.Notes.ToList();
                     return View(list);
                 }
+            }            
+        }
+
+        public IActionResult Detail(int noteNo)
+        {
+            if (HttpContext.Session.GetInt32("USER_LOGIN_KEY") == null)
+            {
+                return RedirectToAction("Login", "Account");
             }
 
+            using (var db = new AspnetNoteDbContext())
+            {
+                var note = db.Notes.FirstOrDefault(n => n.NoteNo.Equals(noteNo));
+                return View(note);
+            }
 
-            
         }
 
         /// <summary>
@@ -42,6 +54,11 @@ namespace AspnetNote.MVC6.Controllers
         /// <returns></returns>
        public IActionResult Add()
         {
+            if (HttpContext.Session.GetInt32("USER_LOGIN_KEY") == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+           
             return View();
         }
 
@@ -53,27 +70,29 @@ namespace AspnetNote.MVC6.Controllers
             {
                 return RedirectToAction("Login", "Account");
             }
-            else
+
+            //int로 cast
+            model.UserNo = int.Parse(HttpContext.Session.GetInt32("USER_LOGIN_KEY").ToString());
+
+            if (ModelState.IsValid)
             {
-                if (ModelState.IsValid)
+                using (var db = new AspnetNoteDbContext())
                 {
-                    using (var db = new AspnetNoteDbContext())
+                    db.Notes.Add(model);
+
+                    if (db.SaveChanges() > 0)
                     {
-                        db.Notes.Add(model);
-
-                        if (db.SaveChanges() > 0)
-                        {
-                            return Redirect("Index");
-
-                        }
-
+                        return Redirect("Index");
 
                     }
-                    //전형적인 에러메시지
-                    ModelState.AddModelError(string.Empty, "게시물을 저장할 수 없습니다.");
+
+
                 }
-                return View(model);
+                //전형적인 에러메시지
+                ModelState.AddModelError(string.Empty, "게시물을 저장할 수 없습니다.");
             }
+            return View(model);
+
 
             
             

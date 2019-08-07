@@ -15,7 +15,7 @@ namespace AspnetNote.MVC6.Migrations
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     UserName = table.Column<string>(nullable: false),
                     UserId = table.Column<string>(nullable: false),
-                    UserPassqord = table.Column<string>(nullable: false)
+                    UserPassword = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {

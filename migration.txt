@@ -1,4 +1,5 @@
-﻿
+﻿//즉시 수정이 가능하다. 
+
 //데이터의 명령문만 만들었다.
 add-migration FirstMigration
 

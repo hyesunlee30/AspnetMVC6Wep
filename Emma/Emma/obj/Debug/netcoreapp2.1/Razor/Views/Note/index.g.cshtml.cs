@@ -120,7 +120,7 @@ using Emma.Models;
             WriteLiteral("    </tbody>\r\n</table>\r\n\r\n");
             EndContext();
             BeginContext(531, 76, false);
-            __tagHelperExecutionContext = __tagHelperScopeManager.Begin("a", global::Microsoft.AspNetCore.Razor.TagHelpers.TagMode.StartTagAndEndTag, "cb5e769106074788a50a9266b838a81b", async() => {
+            __tagHelperExecutionContext = __tagHelperScopeManager.Begin("a", global::Microsoft.AspNetCore.Razor.TagHelpers.TagMode.StartTagAndEndTag, "89edbc8edd7949cea54b15e5cec49295", async() => {
                 BeginContext(597, 6, true);
                 WriteLiteral("게시물 추가");
                 EndContext();

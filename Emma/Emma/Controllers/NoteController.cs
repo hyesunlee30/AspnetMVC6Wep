@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AspnetNote.MVC6.DataContext;
 using Emma.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AspnetNote.MVC6.Controllers
@@ -17,13 +18,20 @@ namespace AspnetNote.MVC6.Controllers
         /// <returns></returns>
         public IActionResult Index()
         {           
-
-            using (var db = new AspnetNoteDbContext())
+            if(HttpContext.Session.GetInt32("USER_LOGIN_KEY") == null)
             {
-                //모두 출력
-                var list = db.Notes.ToList();
-                return View(list);
+                return RedirectToAction("Login", "Account");
             }
+            else
+            {
+                using (var db = new AspnetNoteDbContext())
+                {
+                    //모두 출력
+                    var list = db.Notes.ToList();
+                    return View(list);
+                }
+            }
+
 
             
         }
@@ -41,25 +49,69 @@ namespace AspnetNote.MVC6.Controllers
         public IActionResult Add(Note model)
         {
 
-            if (ModelState.IsValid)
+            if (HttpContext.Session.GetInt32("USER_LOGIN_KEY") == null)
             {
-                using (var db = new AspnetNoteDbContext())
-                {
-                    db.Notes.Add(model);
-                }
-
+                return RedirectToAction("Login", "Account");
             }
-            return View();
+            else
+            {
+                if (ModelState.IsValid)
+                {
+                    using (var db = new AspnetNoteDbContext())
+                    {
+                        db.Notes.Add(model);
+
+                        if (db.SaveChanges() > 0)
+                        {
+                            return Redirect("Index");
+
+                        }
+
+
+                    }
+                    //전형적인 에러메시지
+                    ModelState.AddModelError(string.Empty, "게시물을 저장할 수 없습니다.");
+                }
+                return View(model);
+            }
+
+            
+            
         }
 
         /// <summary>
         /// 게시물 수정
         /// </summary>
         /// <returns></returns>
-        public IActionResult Edit()
+        public IActionResult Edit(Note model)
         {
 
-            return View();
+            if (HttpContext.Session.GetInt32("USER_LOGIN_KEY") == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            else
+            {
+                if (ModelState.IsValid)
+                {
+                    using (var db = new AspnetNoteDbContext())
+                    {
+                        db.Notes.Add(model);
+
+                        if (db.SaveChanges() > 0)
+                        {
+                            return Redirect("Index");
+
+                        }
+
+
+                    }
+                    //전형적인 에러메시지
+                    ModelState.AddModelError(string.Empty, "게시물을 저장할 수 없습니다.");
+                }
+                return View(model);
+            }
+            
         }
 
         /// <summary>

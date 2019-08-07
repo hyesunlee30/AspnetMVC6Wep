@@ -8,10 +8,10 @@ namespace Emma.Models
         [Key]
         public int NoteNo { get; set; }
 
-        [Required]
+        [Required(ErrorMessage ="제목을 입력하세요.")]
         public string NoteTitle { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "내용을 입력하세요.")]
         public string NoteContents { get; set; }
 
         /// <summary>

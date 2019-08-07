@@ -53,7 +53,7 @@ using Emma.Models;
             WriteLiteral("<!DOCTYPE html>\r\n    <html>\r\n        ");
             EndContext();
             BeginContext(37, 269, false);
-            __tagHelperExecutionContext = __tagHelperScopeManager.Begin("body", global::Microsoft.AspNetCore.Razor.TagHelpers.TagMode.StartTagAndEndTag, "f129dffe70794d5d970ee233f4362bab", async() => {
+            __tagHelperExecutionContext = __tagHelperScopeManager.Begin("body", global::Microsoft.AspNetCore.Razor.TagHelpers.TagMode.StartTagAndEndTag, "cd93fc28988d4f058fb0d6f02c4b03d0", async() => {
                 BeginContext(43, 49, true);
                 WriteLiteral(";\r\n            <h1>QR Code</h1>\r\n            <img");
                 EndContext();

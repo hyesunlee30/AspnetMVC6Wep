@@ -33,6 +33,8 @@ namespace Emma
 
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddSession();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -51,6 +53,8 @@ namespace Emma
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+            //app에서 session을 사용한다는 의미
+            app.UseSession();
 
             app.UseMvc(routes =>
             {

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AspnetNote.MVC6.DataContext;
 using AspnetNote.MVC6.ViewModel;
 using Emma.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -51,7 +52,11 @@ namespace AspnetNote.MVC6.Controllers
 
                     if(user != null)
                     {
-                        return RedirectToAction("LoginSuccess", "Home"); //로그인 성공 페이지로 이동
+                        //로그인 성공 페이지로 이동
+                        //HttpContext.Session.SetInt32(key, value);
+                        //로그인시 등재 로그아웃되면 빠져나감
+                        HttpContext.Session.SetInt32("USER_LOGIN_KEY", user.UserNo);
+                        return RedirectToAction("LoginSuccess", "Home"); 
                     }
 
                 }
@@ -66,6 +71,15 @@ namespace AspnetNote.MVC6.Controllers
             return View();
         }
 
+
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Remove("USER_LOGIN_KEY");
+
+            //HttpContext.Session.Clear();
+
+            return RedirectToAction("Index","Home");
+        }
 
         [HttpGet]
         public IActionResult Register()

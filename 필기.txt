@@ -4,3 +4,34 @@ http://www.example.com/api/GetBookList?bookNo=1
 
 POST : DB <- 전달
 헤더와 바디 부분의 정보를 전달한다 Url 정보가 보이지 않는다. 
+
+Model -> 기본 엔티티 클래스 
+User
+-> UserNo
+-> UserName
+ID, password
+
+Viewmodel -> 뷰를 위한 모델 
+
+MVC(Model, View Controller)
+WPF(MVVM 모델-뷰-뷰모델
+
+//전형적인 에러메시지
+ <div class="text-danger" asp-validation-summary="ModelOnly"></div>
+//제일첫번째 혹은 제일 기본적인 걸 가져와라, 조건을 만족하는(람다식)
+var user = db.Users.FirstOrDefault(u=>u.UserId.Equals(model.UserId) && u.UserPassword.Equals(model.UserPassword));
+
+
+출력해주는 기능 
+Asp.net -> IIS(웹서버) = 아파치
+-wepAPI 압축 
+
+ASP.NET Core -> 리눅스, 윈도우, MacOS
+
+미들웨어 - core안에 있는 기능 
+어떤 웹서버를 사용하든, 어떤 플랫폼을 가든 동일하게 사용할 수 있다 
+Startup.cs
+ConfigureServices- 필요한 기능을 차례차례 넣는다
+DI 의존성주입 (객체관리를 쉽게) 생성자에 주입을 해서, 어떤 메소드에서도 동일객체를 사용할 수 있다
+
+ex) session, identity, wepAPI관련기능 

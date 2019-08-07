@@ -35,3 +35,13 @@ ConfigureServices- 필요한 기능을 차례차례 넣는다
 DI 의존성주입 (객체관리를 쉽게) 생성자에 주입을 해서, 어떤 메소드에서도 동일객체를 사용할 수 있다
 
 ex) session, identity, wepAPI관련기능 
+
+
+NPM
+Node Package Manager
+
+Node.js = 자바스크립트로 백엔드 구현하는 프레임워크
+npm, bower가 있어야 font 등의 받을 수 있다
+
+
+CLI (Command Line interface)

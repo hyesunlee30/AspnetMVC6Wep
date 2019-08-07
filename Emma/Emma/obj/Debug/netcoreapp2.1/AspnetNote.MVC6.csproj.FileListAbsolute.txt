@@ -65,3 +65,6 @@ C:\Users\wufad\Documents\Github\AspnetMVC6Wep\Emma\Emma\obj\Debug\netcoreapp2.1\
 C:\Users\wufad\Documents\Github\AspnetMVC6Wep\Emma\Emma\obj\Debug\netcoreapp2.1\AspnetNote.MVC6.csproj.CopyComplete
 C:\Users\wufad\Documents\Github\AspnetMVC6Wep\Emma\Emma\obj\Debug\netcoreapp2.1\Razor\Views\QRCoder\index.g.cshtml.cs
 C:\Users\wufad\Documents\Github\AspnetMVC6Wep\Emma\Emma\obj\Debug\netcoreapp2.1\Razor\Views\Home\LoginSuccess.g.cshtml.cs
+C:\Users\wufad\Documents\Github\AspnetMVC6Wep\Emma\Emma\obj\Debug\netcoreapp2.1\Razor\Views\Note\add.g.cshtml.cs
+C:\Users\wufad\Documents\Github\AspnetMVC6Wep\Emma\Emma\obj\Debug\netcoreapp2.1\Razor\Views\Note\Index.g.cshtml.cs
+C:\Users\wufad\Documents\Github\AspnetMVC6Wep\Emma\Emma\obj\Debug\netcoreapp2.1\Razor\Views\Note\Edit.g.cshtml.cs

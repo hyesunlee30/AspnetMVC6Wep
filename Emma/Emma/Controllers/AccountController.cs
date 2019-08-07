@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AspnetNote.MVC6.DataContext;
+using AspnetNote.MVC6.ViewModel;
 using Emma.Models;
 using Microsoft.AspNetCore.Mvc;
+
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -30,10 +32,36 @@ namespace AspnetNote.MVC6.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpPost]
-        public IActionResult Login(User model)
+        public IActionResult Login(LoginViewModelClass model)
         {
+            //Id, Pw -필수 
+            //using 문에 한 줄이라도 줄면 속도가 빨라진다
+            if (ModelState.IsValid)
+            {
 
-            
+                using (var db = new AspnetNoteDbContext())
+                {
+                    //Linq - 메서드 체이닝
+                    //=> : A Go to B 
+                    // == 메모리에 누수가 발생할 수 있다. UserID는 DB에서 받아왔을 거고 ==는 새로운 객체, String을 선언하게 된다. 그래서 일치여부는 
+                    //
+                    //var user = db.Users.FirstOrDefault(u=>u.UserId == model.UserId && u.UserPassword == model.UserPassword);
+                    //equals를 사용해야 메모리누수가 발생하지않는다. 
+                    var user = db.Users.FirstOrDefault(u=>u.UserId.Equals(model.UserId) && u.UserPassword.Equals(model.UserPassword));
+
+                    if(user != null)
+                    {
+                        return RedirectToAction("LoginSuccess", "Home"); //로그인 성공 페이지로 이동
+                    }
+
+                }
+                //로그인에 실패했을 때
+                ModelState.AddModelError(string.Empty, "로그인 정보가 올바르지 않습니다.");             
+
+
+            }
+
+
 
             return View();
         }

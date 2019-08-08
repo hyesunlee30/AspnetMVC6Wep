@@ -157,8 +157,29 @@ namespace AspnetNote.MVC6.Controllers
         /// 게시물 삭제
         /// </summary>
         /// <returns></returns>
-        public IActionResult Delete()
+        public IActionResult Delete(int noteNo)
         {
+
+            if (HttpContext.Session.GetInt32("USER_LOGIN_KEY") == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            using (var db = new AspnetNoteDbContext())
+            {
+                var note = db.Notes.FirstOrDefault(n => n.NoteNo.Equals(noteNo));
+
+                if (note != null)
+                {
+                    db.Notes.Remove(note);
+
+                    db.SaveChanges();
+
+                    return Redirect("Index");
+                }
+
+            }
+
             return View();
         }
     }

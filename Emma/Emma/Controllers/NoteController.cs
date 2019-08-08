@@ -92,18 +92,34 @@ namespace AspnetNote.MVC6.Controllers
                 ModelState.AddModelError(string.Empty, "게시물을 저장할 수 없습니다.");
             }
             return View(model);
+                                         
+        }
 
+        public IActionResult Edit(int noteNo)
+        {
+                       
+            if (HttpContext.Session.GetInt32("USER_LOGIN_KEY") == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
 
-            
-            
+            using (var db = new AspnetNoteDbContext())
+            {
+                var note = db.Notes.FirstOrDefault(n => n.NoteNo.Equals(noteNo));
+                return View(note);
+            }
+
         }
 
         /// <summary>
         /// 게시물 수정
         /// </summary>
         /// <returns></returns>
+        [HttpPost]
         public IActionResult Edit(Note model)
         {
+
+            var noteNo = model.NoteNo;
 
             if (HttpContext.Session.GetInt32("USER_LOGIN_KEY") == null)
             {
@@ -115,14 +131,18 @@ namespace AspnetNote.MVC6.Controllers
                 {
                     using (var db = new AspnetNoteDbContext())
                     {
-                        db.Notes.Add(model);
 
-                        if (db.SaveChanges() > 0)
+                        var note = db.Notes.FirstOrDefault(n => n.NoteNo.Equals(noteNo));
+
+                        if( note != null)
                         {
+                            note.NoteTitle = model.NoteTitle;
+                            note.NoteContents = model.NoteContents;
+
+                            db.SaveChanges();
+
                             return Redirect("Index");
-
                         }
-
 
                     }
                     //전형적인 에러메시지

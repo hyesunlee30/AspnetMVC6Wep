@@ -93,7 +93,7 @@ using Emma.Models;
             WriteLiteral("</td>                \r\n                <td>");
             EndContext();
             BeginContext(430, 96, false);
-            __tagHelperExecutionContext = __tagHelperScopeManager.Begin("a", global::Microsoft.AspNetCore.Razor.TagHelpers.TagMode.StartTagAndEndTag, "cf4381860a664ec9a625eab297b80ae6", async() => {
+            __tagHelperExecutionContext = __tagHelperScopeManager.Begin("a", global::Microsoft.AspNetCore.Razor.TagHelpers.TagMode.StartTagAndEndTag, "a00af5f0c7084c7cb69e149a843e6371", async() => {
                 BeginContext(508, 14, false);
 #line 22 "C:\Users\wufad\Documents\Github\AspnetMVC6Wep\Emma\Emma\Views\Note\index.cshtml"
                                                                                             Write(note.NoteTitle);
@@ -152,7 +152,7 @@ using Emma.Models;
             WriteLiteral("    </tbody>\r\n</table>\r\n\r\n");
             EndContext();
             BeginContext(628, 76, false);
-            __tagHelperExecutionContext = __tagHelperScopeManager.Begin("a", global::Microsoft.AspNetCore.Razor.TagHelpers.TagMode.StartTagAndEndTag, "de6786f252f84c4cb1cccb953916536f", async() => {
+            __tagHelperExecutionContext = __tagHelperScopeManager.Begin("a", global::Microsoft.AspNetCore.Razor.TagHelpers.TagMode.StartTagAndEndTag, "c3119646da5541df993ef0bcbbf72a65", async() => {
                 BeginContext(694, 6, true);
                 WriteLiteral("게시물 추가");
                 EndContext();

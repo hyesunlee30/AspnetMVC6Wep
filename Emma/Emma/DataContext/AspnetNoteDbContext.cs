@@ -14,6 +14,7 @@ namespace AspnetNote.MVC6.DataContext
 
         public DbSet<Note> Notes { get; set; }
 
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             //나는 Ms sql을 쓸 것이다. ("")-커넥션 스트링 https://www.connectionstrings.com/sql-server/

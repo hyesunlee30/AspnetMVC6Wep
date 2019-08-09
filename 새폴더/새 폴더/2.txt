@@ -1,0 +1,84 @@
+/****** Object:  StoredProcedure [dbo].[InsertOrUpdate_for_CustomerOrderAPI_Qoo10_SG]    Script Date: 2019-08-09 오후 12:07:34 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+
+
+-- =============================================
+-- Author:      <Author, , Name>
+-- Create Date: <Create Date, , >
+-- Description: <Description, , >
+-- =============================================
+ALTER PROCEDURE [dbo].[InsertOrUpdate_for_CustomerOrderAPI_Qoo10_SG]
+(
+    -- Add the parameters for the stored procedure here
+	@user_id nvarchar(450),
+	@json_data ntext,
+	@조회시작일 nvarchar(450),
+	@조회종료일 nvarchar(450),
+	@조회상태 nvarchar(450)
+)
+AS
+BEGIN
+    -- SET NOCOUNT ON added to prevent extra result sets from
+    -- interfering with SELECT statements.
+    SET NOCOUNT ON
+
+    -- Insert statements for procedure here 
+	DECLARE @mycount INT;
+	
+	Begin Try  
+		SELECT 
+			@mycount = count(*)
+		from 
+			[CustomerOrderAPI_Qoo10_SG]
+		where 
+			[조회시작일] = @조회시작일 and 
+			[조회종료일] = @조회종료일 and
+			[조회상태] = @조회상태  
+    
+		IF @mycount = 0
+			BEGIN
+				INSERT INTO [dbo].[CustomerOrderAPI_Qoo10_SG]
+					   ([UserId]
+					   ,[JsonData]
+					   ,[조회시작일]
+					   ,[조회종료일]
+					   ,[조회상태])
+				 VALUES
+					   (@user_id
+					   ,@json_data
+					   ,@조회시작일
+					   ,@조회종료일
+					   ,@조회상태)
+			END
+		ELSE
+			BEGIN
+				Update [dbo].[CustomerOrderAPI_Qoo10_SG]
+				set
+					[JsonData] = @json_data
+					, [UserId] = @user_id
+				where 
+					[조회시작일] = @조회시작일 and 
+					[조회종료일] = @조회종료일 and 
+					[조회상태] = @조회상태;
+			END
+		
+	End Try  
+	Begin Catch
+		SELECT   
+			@@Error as Error ,
+			Error_Number()  as Number,
+			Error_Line() as Line,
+			Error_Message() as [Message],
+			Error_Procedure() as [Procedure],
+			Error_Severity() as severity,
+			Error_State() as state  
+	End Catch
+	
+
+END

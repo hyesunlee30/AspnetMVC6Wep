@@ -1,0 +1,249 @@
+
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Data;
+using System.Data.SqlClient;
+using System.Globalization;
+using System.IO;
+using System.Net;
+using System.Reflection;
+using System.Text;
+using System.Threading;
+using System.Web;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Host;
+
+namespace FunctionApp
+{
+
+    public class Qoo10SG
+    {
+
+
+
+        public string 조회시작일 { get; set; }
+
+        public string 조회종료일 { get; set; }
+
+        public string 조회상태 { get; set; }
+
+
+        public string 배송_조회()
+        {
+
+            //NameValueCollection : 키나 인덱스를 사용하여 액세스할 수 있는 연결된 String 키와 String 값의 컬렉션을 나타냅니다.
+            //HttpUtility.ParseQueryString(string.Empty); 쿼리 문자열을 NameValueCollection으로 구문 분석합니다.
+            var parameters = HttpUtility.ParseQueryString(string.Empty);
+            parameters["ShippingStat"] = this.조회상태;
+            parameters["search_Sdate"] = this.조회시작일;
+            parameters["search_Edate"] = this.조회종료일;
+
+            //MethodBase.GetCurrentMethod Method는 실행 중인 메서드를 나타내는 MethodBase 개체를 반환한다. 
+            var result = parsingSg.Get(MethodBase.GetCurrentMethod().Name, parameters);
+
+            return result;
+        }
+
+
+
+    }
+    /// <summary>
+    /// 타이머 트리거를 사용해 Qoo10 DB 자동업로드
+    /// 1시간의 1번씩 업데이트 하는데, 반영이 되면 insert 하지않고
+    /// update 안 하면 insert 할 수 있게 
+    /// </summary>
+    /// 
+    public static class TimerTrigger6
+    {
+        [FunctionName("TimerTrigger6_Qoo10SG_Fetching")]
+        public static void Run([TimerTrigger("0 */30 * * * *")]TimerInfo myTimer, TraceWriter log)
+        {
+            try
+            {
+                log.Info($"C# Timer trigger function executed at: {DateTime.Now}");
+
+
+                string 현재시간 = DateTime.Now.ToString("yyyyMMdd");
+
+                DateTime dt종료 = DateTime.ParseExact(현재시간,
+                                            "yyyyMMdd",
+                                            CultureInfo.InvariantCulture,
+                                            DateTimeStyles.None);
+
+
+                DateTime dt시작 = dt종료.AddMonths(-1);
+
+
+                String connstr = Environment.GetEnvironmentVariable("DefaultConnection");
+                
+
+
+
+                string UserID = "3b2f2617-6143-4c1b-99ea-104f07f37f30";
+
+                using (SqlConnection sqlConn = new SqlConnection(connstr))
+                {
+                    sqlConn.Open();
+
+                    SqlCommand cmd = new SqlCommand();
+
+                    cmd.Connection = sqlConn;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.CommandText = "dbo.[InsertOrUpdate_for_CustomerOrderAPI_Qoo10_SG]";
+
+                    cmd.Parameters.Add("@user_id", SqlDbType.NVarChar, 450);
+                    cmd.Parameters.Add("@json_data", SqlDbType.NText);
+                    cmd.Parameters.Add("@조회시작일", SqlDbType.NVarChar, 450);
+                    cmd.Parameters.Add("@조회종료일", SqlDbType.NVarChar, 450);
+                    cmd.Parameters.Add("@조회상태", SqlDbType.NVarChar, 450);
+
+
+                    var data = new Qoo10SG();
+
+                    {
+                        for (var day = dt종료.Date; day.Date >= dt시작.Date; day = day.AddDays(-1))
+                        {
+                            log.Info(day.Date.ToString("yyyy-MM-dd") + " Qoo10SG 처리 시작 ");
+
+                            for (int sa = 1; sa <= 5; sa++)
+                            {
+                                data.조회상태 = sa.ToString();
+                                data.조회시작일 = data.조회종료일 = day.ToString("yyyyMMdd");
+
+                                var result = data.배송_조회();
+
+                                string date = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+
+
+                                cmd.Parameters["@user_id"].Value = UserID;
+                                cmd.Parameters["@json_data"].Value = result;
+                                cmd.Parameters["@조회시작일"].Value = data.조회시작일;
+                                cmd.Parameters["@조회종료일"].Value = data.조회종료일;
+                                cmd.Parameters["@조회상태"].Value = data.조회상태;
+
+
+                                cmd.ExecuteNonQuery();
+                            }
+                            log.Info(day.Date.ToString("yyyy-MM-dd") + " Qoo10SG 처리 완료 ");
+                            Thread.Sleep(500);
+                        }
+
+                    }
+                }
+            }
+            catch (Exception ee)
+            {
+                log.Error("TimerTrigger6에서 예외 발생: " + ee.Message);
+            }
+        }
+
+
+    }
+
+    public class parsingSg
+    {
+        public static Dictionary<string, string> DictPathString { get; set; }
+
+        private static string schema = "http";
+        private static int port = 80;
+        private static string path;
+
+        private const string BaseUri = "http://api.qoo10.sg";
+
+        private const string Key = "S5bnbfynQvMSGweC0dMpzVNbJbA7EbElkzSV7Zh03_g_2_SWJUXiIB33vQNrmsEuhsi3_g_1_BpOUJ_g_2_wijYSqmB_g_2_5O5QCiX9WytJ_g_2_q_g_2_3dRmc1gRlmvsDa_g_1_Pp9XUe96lUWnA0ypn2";
+
+        private static readonly Dictionary<string, string> PathDictionary = new Dictionary<string, string>
+        {
+            {"배송_조회", "/GMKT.INC.Front.QAPIService/Giosis.qapi/ShippingBasic.GetShippingInfo" }
+        };
+
+
+        public static string GET_API_URI(string Name)
+        {
+            if (PathDictionary.TryGetValue(Name, out parsingSg.path))
+            {
+                if (DictPathString != null)
+                {
+                    foreach (KeyValuePair<string, string> item in DictPathString)
+                    {
+                        parsingSg.path = parsingSg.path.Replace("{" + item.Key + "}", item.Value);
+                    }
+                }
+
+                return BaseUri + parsingSg.path;
+            }
+            else
+            {
+                throw new KeyNotFoundException("API가 존재하지 않습니다");
+            }
+        }
+
+        // 쿠팡 예제 코드
+        public static string Get(string ApiName, NameValueCollection queryString)
+        {
+            var url = parsingSg.GET_API_URI(ApiName);
+            const string method = "GET";
+
+            // 인증키 추가
+            queryString["key"] = parsingSg.Key;
+
+            var uriBuilder = new UriBuilder(url)
+            {
+                Query = queryString.ToString(),
+                Scheme = schema,
+                Port = port
+            };
+            var finalUrl = uriBuilder.Uri;
+
+            var responseString = "";
+            try
+            {
+                var request = (HttpWebRequest)WebRequest.Create(finalUrl.ToString());
+
+                request.Timeout = 10000;
+                request.Method = method;
+
+                request.ContentType = "application/xml;charset=UTF-8";
+
+                var response = (HttpWebResponse)request.GetResponse();
+                // Display the status ...
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    Console.WriteLine("Response Status Code is OK and StatusDescription is: {0}",
+                        response.StatusDescription);
+
+                    var responseStream = response.GetResponseStream();
+                    Encoding encode = System.Text.Encoding.GetEncoding("utf-8");
+                    // Pipes the stream to a higher level stream reader with the required encoding format. 
+                    var reader = new StreamReader(responseStream, encode);
+
+                    responseString = reader.ReadToEnd();
+
+                    reader.Close();
+                    responseStream.Close();
+                    response.Close();
+
+                    Console.WriteLine(responseString);
+                    //Console.WriteLine(String.Format("Response: {0}", responseString));
+                }
+                else
+                {
+                    Console.WriteLine("Response Status Code is Not OK and StatusDescription is: {0}",
+                        response.StatusDescription);
+                }
+            }
+
+            catch (Exception e)
+            {
+                Console.WriteLine("The following Exception was raised : {0}", e.Message);
+            }
+
+            return responseString;
+        }
+
+
+
+
+    }
+}

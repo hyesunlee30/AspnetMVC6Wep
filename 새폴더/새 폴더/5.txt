@@ -1,0 +1,59 @@
+import os
+import time
+from tkinter import *
+from tkinter import filedialog
+
+from PyQt5.QtWidgets import *
+
+from main import CALL_SCRAPING, CREATE_xlsx
+
+
+class Mypage(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.label1 = QLabel('', self)
+        self.label1.setGeometry(120, 40, 500, 32)
+
+        label2 = QLabel("ITEM LIST : ", self)
+        label2.setGeometry(20, 40, 100, 32)
+
+        self.label3 = QLabel('', self)
+        self.label3.setGeometry(10, 40, 100, 32)
+
+        btn1 = QPushButton('&ITEM LIST IMPORT', self)
+        btn1.setGeometry(100, 100, 500, 32)
+        btn1.toggle()
+        btn1.clicked.connect(self.clickMethod1)
+
+        btn2 = QPushButton('&WEB SCRAPING START', self)
+        btn2.setGeometry(100, 150, 500, 32)
+        btn2.toggle()
+        btn2.clicked.connect(self.clickMethod2)
+
+        self.setWindowTitle('WEB SCRAPING')
+        self.resize(700, 300)
+        self.move(300, 200)
+        self.show()
+
+    def clickMethod1(self):
+        root = Tk()
+        root.filename = filedialog.askopenfilename(title="ITEM LIST FIND", filetype=(("All_file", "*.*"), ("excel_file", "*.xlsx")))
+        DATA_PATH = root.filename
+        self.label1.setText(DATA_PATH)
+        root.withdraw()
+
+    def clickMethod2(self):
+        DATA_FILE_PATH = self.label1.text()
+        DATA_FILE_PATH1 = DATA_FILE_PATH
+        FILE_PATH = os.path.dirname(DATA_FILE_PATH)
+        time.sleep(1)
+        end_messege = CALL_SCRAPING(DATA_FILE_PATH1, FILE_PATH) #스크래핑 시작 / 엑셀파일 생성 -> 생성된 엑셀파일 주소랑, 아이템 리스트 주소를 매개변수로 스크래핑함수 CALL
+        self.label1.setText(end_messege) #종료되면 스크래핑 함수에서 종료메세지 반환.
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = Mypage()
+    sys.exit(app.exec_())

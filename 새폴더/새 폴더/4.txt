@@ -1,0 +1,145 @@
+import re
+from bs4 import BeautifulSoup
+def wemakeprice_item(driver, delivery_cost, item_cost):
+    if len(delivery_cost) > 4:
+        delivery_cost_check = re.findall(r"(\d+)", delivery_cost)
+        delivery_cost_check = ''.join(delivery_cost_check)
+        if int(item_cost) < int(delivery_cost_check): #조건부 무료배송 - 물품 1개의 가격이 무료배송 조건가격보다 낮을경우 물품에 배송비를 추가.
+        if int(item_cost) < int(delivery_cost_check): #조건부 무료배송 - 물품 1개의 가격이 무료배송 조건가격보다 낮을경우 물품에 배송비를 추가
+            html = driver.page_source
+            soup = BeautifulSoup(html, 'html.parser')
+            cost_check = soup.select_one('div.info_product > dl > dd > p > em')
+            cost_check = cost_check.text
+            cost_check = re.findall(r"(\d+)", cost_check)
+            cost_check = ''.join(cost_check)
+            item_cost = item_cost + int(cost_check)
+            item_cost = item_cost + int(cost_check) #배송비데이터와 가격데이터를 더하여 최종 물품가격데이터로 반환
+        return driver, item_cost
+
+    elif len(delivery_cost) == 0: #배송비가 존재하는 경우
+        html = driver.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        cost_check = soup.select_one('div.info_product > dl > dd > p > em')
+        cost_check = cost_check.text
+        cost_check = re.findall(r"(\d+)", cost_check)
+        cost_check = ''.join(cost_check)
+        item_cost = item_cost + int(cost_check)
+        item_cost = item_cost + int(cost_check) #배송비데이터와 가격데이터를 더하여 최종 물품가격데이터로 반환
+
+    return driver, item_cost
+    return driver, item_cost #배송비 발생 조건에 해당하지 않을경우 이미 수집된 데이터를 그대로 다시 반환
+
+def wemakeprice_list1(driver, delivery_cost, item_input2):
+    count = 0
+    price_count = 0
+    item_cost = 0
+    check_soldout = ''
+
+    item = item_input2
+    html = driver.page_source
+    soup = BeautifulSoup(html, 'html.parser')
+    item_name_check = soup.select('div.info_product > div.box_inputarea > div.item_selbox > div > div.lay_op > div.op_conts > ul.item_option > li > a > div.selected_text > span.memo')
+    #판매 상세페이지에서 검색 아이템의 판매여부와 품절여부를 확인.
+    for item_check in item_name_check:
+        name_check = item_check.text
+        item_name_check_soldout = re.findall(r"품절", name_check)
+        item_name_check = re.findall(item, name_check)
+        now_selling_check = ''.join(item_name_check_soldout)
+        now_selling_neme = ''.join(item_name_check)
+        count = count + 1
+        if len(now_selling_neme) != 0:
+            if len(now_selling_check) == 0:
+                selling_item_cost = soup.select('div.info_product > div.box_inputarea > div.item_selbox > div > div.lay_op > div.op_conts > ul.item_option > li > a > div.selected_text > span.price')
+                for item_cost_check in selling_item_cost:
+                    price_count = price_count + 1
+                    if price_count == count:
+                        item_cost = item_cost_check.text
+                        item_cost = re.findall(r"(\d+)", item_cost)
+                        item_cost = ''.join(item_cost) #검색 아이템의 실제 판매가격을 수집.
+                        break
+                break
+            else:
+                return driver, item_cost
+    if item_cost == 0:
+        return driver, item_cost
+    if len(delivery_cost) > 4:
+        delivery_cost_check = re.findall(r"(\d+)", delivery_cost)
+        delivery_cost_check = ''.join(delivery_cost_check)
+        if int(item_cost) < int(delivery_cost_check): #조건부 무료배송 - 물품 1개의 가격이 무료배송 조건가격보다 낮을경우 물품에 배송비를 추가.
+        if int(item_cost) < int(delivery_cost_check): #조건부 무료배송 - 물품 1개의 가격이 무료배송 조건가격보다 낮을경우 물품에 배송비를 추가
+            html = driver.page_source
+            soup = BeautifulSoup(html, 'html.parser')
+            cost_check = soup.select_one('div.info_product > dl > dd > p > em')
+            cost_check = cost_check.text
+            cost_check = re.findall(r"(\d+)", cost_check)
+            cost_check = ''.join(cost_check)
+            item_cost = item_cost + int(cost_check)
+    elif len(delivery_cost) == 0: #배송비가 존재하는 경우
+        html = driver.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        cost_check = soup.select_one('div.info_product > dl > dd > p > em')
+        cost_check = cost_check.text
+        cost_check = re.findall(r"(\d+)", cost_check)
+        cost_check = ''.join(cost_check)
+        item_cost = item_cost + int(cost_check)
+    return driver, item_cost
+def wemakeprice_list2(driver, delivery_cost, item_input2):
+    item_cost = 0
+    name_index = 0
+    cost_index = 0
+    check_soldout = ''
+    item = item_input2
+    html = driver.page_source
+    soup = BeautifulSoup(html, 'html.parser')
+    item_name_check = soup.select('div.deal_info div.wrap_option > div > div.option-select-box > ul > li > a > span.size')
+    for name_check in item_name_check:
+        item_name = name_check.text
+        item_name_check = re.findall(item, item_name)
+        item_name_check = ''.join(item_name_check)
+        if len(item_name_check) != 0:
+            html = driver.page_source
+            soup = BeautifulSoup(html, 'html.parser')
+            item_cost_check = soup.select('div.deal_info div.wrap_option > div > div.option-select-box > ul > li > a > span.option-price')
+            for cost in item_cost_check:
+                if name_index == cost_index:
+                    item_cost = cost.text
+                    check_soldout = re.findall(r"품절", item_cost)
+                    item_cost = re.findall(r"(\d+)", item_cost)
+                    check_soldout = ''.join(check_soldout)
+                    item_cost = ''.join(item_cost)
+                    break
+                cost_index = cost_index + 1
+            break
+        name_index = name_index + 1
+    if len(check_soldout) != 0 or int(item_cost) == 0:
+        return driver, item_cost
+    if len(delivery_cost) == 0: #지정배송비가 존재하는 경우
+        html = driver.page_source
+        soup = BeautifulSoup(html, 'html.parser')
+        delivery_cost_check = soup.select('div.cont_pd > div.cd_chk_info > div > dl > dd > ul > li.ir_ico')
+        for delivery_cost in delivery_cost_check:
+            cost_check = delivery_cost.text
+            delivery_cost = re.findall(r"배송비", cost_check)
+            delivery_cost = ''.join(delivery_cost)
+            if len(delivery_cost) == 3:
+                cost = re.findall(r"(\d+)", cost_check) #cost_check를 숫자만 찾는 findall을 수행하면 list형태인 cost의 0번째 인자값이 배송비
+                item_cost = item_cost + cost[0]
+                item_cost = item_cost + cost[0] #물품가격과 배송비를 더하여 반환
+                break
+
+    elif len(delivery_cost) >= 5:
+        cost_check = re.findall(r"(\d+)", delivery_cost)
+        cost_check = ''.join(cost_check)
+        if cost_check > item_cost:
+            html = driver.page_source
+            soup = BeautifulSoup(html, 'html.parser')
+            delivery_cost_check = soup.select('div.cont_pd > div.cd_chk_info > div > dl > dd > ul > li.ir_ico')
+            for delivery_cost in delivery_cost_check:
+                cost_check = delivery_cost.text
+                delivery_cost = re.findall(r"배송비", cost_check)
+                delivery_cost = ''.join(delivery_cost)
+                if len(delivery_cost) == 3:
+                    cost = re.findall(r"(\d+)", cost_check) #cost_check를 숫자만 찾는 findall을 수행하면 list형태인 cost의 0번째 인자값이 배송비
+                    item_cost = item_cost + cost[0]
+                    break
+    return driver, item_cost

@@ -1,0 +1,1064 @@
+import requests
+import numpy as np
+import pandas as pd
+import openpyxl
+import re
+import time
+from selenium import webdriver
+from bs4 import BeautifulSoup
+from pandas import DataFrame
+from wemakeprice import wemakeprice_item, wemakeprice_list1, wemakeprice_list2
+from multiprocessing import Pool
+
+def add_Purchase_priority(margin_data_list):
+    Average_margin_list = []
+    for data_list in margin_data_list:
+        data_list.append(' ')
+        if len(data_list) == 19:
+            del data_list[18]
+
+        if data_list[17] != 0:
+            Average_margin_list.append(data_list[17])
+
+    Average_margin_list.sort(reverse=True)
+
+    for data_list in margin_data_list:
+        if data_list[17] == 0:
+            data_list.append("데이터없음")
+
+        else:
+            for Average_margin in Average_margin_list:
+                if data_list[17] == Average_margin:
+                    data_list.append(Average_margin_list.index(Average_margin) + 1)
+                    break
+
+    return margin_data_list
+
+def margin_Average(margin_list):
+    for margin_lIst_count in margin_list:
+        margin_sum_data = 0
+        margin_avr_data = 0
+        preference_sum_data = 0
+        preference_avr_data = 0
+        preference_index_list = [6, 10, 14]
+        margin_index_list = [7, 11, 15]
+        count = 0
+        for index_count in preference_index_list:
+            preference_rate = margin_lIst_count[index_count]
+            preference_rate = re.findall(r"(\d+)", preference_rate)
+            preference_rate = ''.join(preference_rate)
+
+            if preference_rate != 0:
+                preference_sum_data = preference_sum_data + int(preference_rate)
+                count = count + 1
+        if preference_sum_data != 0:
+            preference_avr_data = preference_sum_data / count
+        margin_lIst_count.append(int(preference_avr_data))
+        count = 0
+        for index_check in margin_index_list:
+            margin_rate = margin_lIst_count[index_check]
+            margin_rate = re.findall(r"(\d+)", margin_rate)
+            margin_rate = ''.join(margin_rate)
+
+            if margin_rate != 0:
+                margin_sum_data = margin_sum_data + int(margin_rate)
+                count = count + 1
+        if margin_sum_data != 0:
+            margin_avr_data = margin_sum_data / count
+            margin_avr_data = round(margin_avr_data, 2)
+            margin_avr_data = str(margin_avr_data) + '%'
+
+        margin_lIst_count.append(margin_avr_data)
+
+    return margin_list
+
+def make_margin_list_1(scrapy_data, serch_list):
+def make_margin_list_1(scrapy_data, serch_list):#평균가격표에 들어갈 데이터리스트를 가져와서 해당 리스트에 포함되어있는 몰이름, 최저가, 인기도, 마진율 데이터를 입력하는 함수
+    mall_name = 0
+    low_cost = 6
+    preference = 8
+    margin = 9
+    margin_list = []
+
+    sum_item_1 = []
+    sum_item_1 = make_margin_list_first(serch_list[0])
+    sum_item_1 = make_margin_list_first(serch_list[0])#4개씩 분할검색하고 남은 나머지 물품을 검색한 후 호출되기 때문에 리스트의 개수가 1개.
+
+    #한개의 물품을 검색한 루틴이기 대문에 차례대로 데이터를 입력.
+    for data in scrapy_data:
+        item_list_1 = []
+        item_list_1.append(data[mall_name])
+        item_list_1.append(data[low_cost])
+        item_list_1.append(data[preference])
+        item_list_1.append(data[margin])
+        sum_item_1 = item_list_1
+        sum_item_1 = sum_item_1 + item_list_1
+
+    margin_list.append(sum_item_1)
+    margin_list = margin_Average(margin_list)
+
+    return margin_list
+
+def make_margin_list_2(scrapy_data, serch_list):
+def make_margin_list_2(scrapy_data, serch_list):#평균가격표에 들어갈 데이터리스트를 가져와서 해당 리스트에 포함되어있는 몰이름, 최저가, 인기도, 마진율 데이터를 입력하는 함수
+    mall_name = 0
+    low_cost = 6
+    preference = 8
+    margin = 9
+    index = 0
+    margin_list = []
+
+    sum_item_1 = []
+    sum_item_2 = []
+
+    sum_item_1 = make_margin_list_first(serch_list[0])
+    sum_item_1 = make_margin_list_first(serch_list[0])#4개씩 분할검색하고 남은 나머지 물품을 검색한 후 호출되기 때문에 리스트의 개수가 2개.
+    sum_item_2 = make_margin_list_first(serch_list[1])
+
+    index_length = len(scrapy_data)
+
+    #물품별로 분할하여 해당 리스트의 데이터가 어떤 물품의 데이터인지를 확인, 데이터를 입력하는 루틴.
+    for data in scrapy_data:
+        if 0 == index_length % 2:
+        if 0 == index % 2: #첫번째(옥션), 세번째(네이버), 다섯번째(위메프) 리스트의 데이터의 일부를 가져와 리스트에 삽입하는 과정. index를 나머지연산하여 접근함.
+            item_list_1 = []
+            item_list_1.append(data[mall_name])
+            item_list_1.append(data[low_cost])
+            item_list_1.append(data[preference])
+            item_list_1.append(data[margin])
+            sum_item_1 = item_list_1
+            sum_item_1 = sum_item_1 + item_list_1
+
+        elif 1 == index_length % 2:
+        elif 1 == index % 2: #두번째(옥션), 네번째(네이버), 여섯번째(위메프) 리스트의 데이터의 일부를 가져와 리스트에 삽입하는 과정. index를 나머지연산하여 접근함.
+            item_list_2 = []
+            item_list_2.append(data[mall_name])
+            item_list_2.append(data[low_cost])
+            item_list_2.append(data[preference])
+            item_list_2.append(data[margin])
+            sum_item_2 = item_list_2
+            sum_item_2 = sum_item_2 + item_list_2
+        index = index + 1
+
+    margin_list.append(sum_item_1)
+    margin_list.append(sum_item_2)
+    margin_list = margin_Average(margin_list)
+
+    return margin_list
+
+def make_margin_list_3(scrapy_data, serch_list):
+def make_margin_list_3(scrapy_data, serch_list):#평균가격표에 들어갈 데이터리스트를 가져와서 해당 리스트에 포함되어있는 몰이름, 최저가, 인기도, 마진율 데이터를 입력하는 함수
+    mall_name = 0
+    low_cost = 6
+    preference = 8
+    margin = 9
+    index = 0
+    margin_list = []
+
+    sum_item_1 = []
+    sum_item_2 = []
+    sum_item_3 = []
+
+    sum_item_1 = make_margin_list_first(serch_list[0])
+    sum_item_1 = make_margin_list_first(serch_list[0]) #4개씩 분할검색하고 남은 나머지 물품을 검색한 후 호출되기 때문에 리스트의 개수가 3개.
+    sum_item_2 = make_margin_list_first(serch_list[1])
+    sum_item_3 = make_margin_list_first(serch_list[2])
+
+    index_length = len(scrapy_data)
+
+    #물품별로 분할하여 해당 리스트의 데이터가 어떤 물품의 데이터인지를 확인, 데이터를 입력하는 루틴.
+    for data in scrapy_data:
+        if 0 == index_length % 3:
+        if 0 == index % 3: #첫번째(옥션), 네번째(네이버), 일곱번째(위메프) 리스트의 데이터의 일부를 가져와 리스트에 삽입하는 과정. index를 나머지연산하여 접근함.
+            item_list_1 = []
+            item_list_1.append(data[mall_name])
+            item_list_1.append(data[low_cost])
+            item_list_1.append(data[preference])
+            item_list_1.append(data[margin])
+            sum_item_1 = item_list_1
+            sum_item_1 = sum_item_1 + item_list_1
+
+        elif 1 == index_length % 3:
+        elif 1 == index % 3: #두번째(옥션), 다섯번째(네이버), 여덟번째(위메프) 리스트의 데이터의 일부를 가져와 리스트에 삽입하는 과정. index를 나머지연산하여 접근함.
+            item_list_2 = []
+            item_list_2.append(data[mall_name])
+            item_list_2.append(data[low_cost])
+            item_list_2.append(data[preference])
+            item_list_2.append(data[margin])
+            sum_item_2 = item_list_2
+            sum_item_2 = sum_item_2 + item_list_2
+
+        elif 2 == index_length % 3:
+        elif 2 == index % 3: #세번째(옥션), 여섯번째(네이버), 아홉번째(위메프) 리스트의 데이터의 일부를 가져와 리스트에 삽입하는 과정. index를 나머지연산하여 접근함.
+            item_list_3 = []
+            item_list_3.append(data[mall_name])
+            item_list_3.append(data[low_cost])
+            item_list_3.append(data[preference])
+            item_list_3.append(data[margin])
+            sum_item_3 = item_list_3
+            sum_item_3 = sum_item_3 + item_list_3
+        index = index + 1
+
+    margin_list.append(sum_item_1)
+    margin_list.append(sum_item_2)
+    margin_list.append(sum_item_3)
+    margin_list = margin_Average(margin_list)
+
+    return margin_list
+
+def make_margin_list_4(scrapy_data, serch_list):
+def make_margin_list_4(scrapy_data, serch_list): #평균가격표에 들어갈 데이터리스트를 가져와서 해당 리스트에 포함되어있는 몰이름, 최저가, 인기도, 마진율 데이터를 입력하는 함수
+    mall_name = 0
+    low_cost = 6
+    preference = 8
+    margin = 9
+    margin_list = []
+    index = 0
+    sum_item_1 = []
+    sum_item_2 = []
+    sum_item_3 = []
+    sum_item_4 = []
+
+    sum_item_1 = make_margin_list_first(serch_list[0])
+    sum_item_2 = make_margin_list_first(serch_list[1])
+    sum_item_3 = make_margin_list_first(serch_list[2])
+    sum_item_4 = make_margin_list_first(serch_list[3])
+
+    index_length = len(scrapy_data)
+    sum_item_1 = make_margin_list_first(serch_list[0]) #4개씩 분할하여 데이터를 검색, 수집하였을때 첫번째 물품 데이터 입력하는 루틴.
+    sum_item_2 = make_margin_list_first(serch_list[1]) #두번째 물품데이터
+    sum_item_3 = make_margin_list_first(serch_list[2]) #세번째 물품데이터
+    sum_item_4 = make_margin_list_first(serch_list[3]) #네번째 물품데이터
+
+    #물품별로 분할하여 해당 리스트의 데이터가 어떤 물품의 데이터인지를 확인, 데이터를 입력하는 루틴.
+    for data in scrapy_data:
+        if 0 == index % 4:
+        if 0 == index % 4: #첫번째(옥션), 다섯번째(네이버), 아홉번째(위메프) 리스트의 데이터의 일부를 가져와 리스트에 삽입하는 과정. index를 나머지연산하여 접근함.
+            item_list_1 = []
+            item_list_1.append(data[mall_name])
+            item_list_1.append(data[low_cost])
+            item_list_1.append(data[preference])
+            item_list_1.append(data[margin])
+            sum_item_1 = item_list_1
+            sum_item_1 = sum_item_1 + item_list_1
+
+        elif 1 == index % 4:
+        elif 1 == index % 4: #두번째(옥션), 여섯번째(네이버), 열번째(위메프) 리스트의 데이터의 일부를 가져와 리스트에 삽입하는 과정. index를 나머지연산하여 접근함.
+            item_list_2 = []
+            item_list_2.append(data[mall_name])
+            item_list_2.append(data[low_cost])
+            item_list_2.append(data[preference])
+            item_list_2.append(data[margin])
+            sum_item_2 = item_list_2
+            sum_item_2 = sum_item_2 + item_list_2
+
+        elif 2 == index % 4:
+        elif 2 == index % 4: #세번째(옥션), 일곱번째(네이버), 열한번째(위메프) 리스트의 데이터의 일부를 가져와 리스트에 삽입하는 과정. index를 나머지연산하여 접근함.
+            item_list_3 = []
+            item_list_3.append(data[mall_name])
+            item_list_3.append(data[low_cost])
+            item_list_3.append(data[preference])
+            item_list_3.append(data[margin])
+            sum_item_3 = item_list_3
+            sum_item_3 = sum_item_3 + item_list_3
+
+        elif 3 == index % 4:
+        elif 3 == index % 4: #네번째(옥션), 여덟번째(네이버), 열두번째(위메프) 리스트의 데이터의 일부를 가져와 리스트에 삽입하는 과정. index를 나머지연산하여 접근함.
+            item_list_4 = []
+            item_list_4.append(data[mall_name])
+            item_list_4.append(data[low_cost])
+            item_list_4.append(data[preference])
+            item_list_4.append(data[margin])
+            sum_item_4 = item_list_4
+            sum_item_4 = sum_item_4 + item_list_4
+        index = index + 1
+
+    margin_list.append(sum_item_1)
+    margin_list.append(sum_item_2)
+    margin_list.append(sum_item_3)
+    margin_list.append(sum_item_4)
+    print(margin_list)
+
+    margin_list = margin_Average(margin_list)
+
+    return margin_list
+
+def make_margin_list_first(serch_list):
+def make_margin_list_first(serch_list): #마진율시트에 맨처음에 기본적인 데이터를 입력하는 루트
+    sum_item = []
+    item_name = serch_list[0]
+    brand_name = serch_list[1]
+    wholesale_price = serch_list[2]
+    image_path = '이미지'
+
+    sum_item.append(image_path) #이미지 삽입공간.
+    sum_item.append(brand_name)
+    sum_item.append(item_name)
+    sum_item.append(wholesale_price)
+    sum_item.append(image_path) #이미지
+    sum_item.append(brand_name) #브랜드이름
+    sum_item.append(item_name) #아이템이름
+    sum_item.append(wholesale_price) #도매가
+
+    return sum_item
+
+def Margin_rate(l_cost, Wholesale_price):
+def Margin_rate(l_cost, Wholesale_price): #도매가와 최저가를 입력받아 마진율을 구하는 루틴
+    low_cost = l_cost
+    W_price = Wholesale_price
+
+    margin_rate = ((low_cost - W_price) / low_cost) * 100
+    margin_rate = round(margin_rate, 2)
+    margin_rate = str(margin_rate) + '%'
+    return margin_rate
+
+def scraping(brand_list):
+def scraping(brand_list): #스크래핑 함수를 멀티프로세싱으로 생성하는 함수
+    scrapy_data = []
+    scrapy_naver = []
+    scrapy_auction = []
+    scrapy_wemakeprice = []
+    pool = Pool(processes=2)
+    auction = pool.map(scraping_data_auction, brand_list)
+    for data_auction in auction:
+        count = 0
+        for data in data_auction:
+            if count == 0:
+                scrapy_data.append(data)
+            elif count % 2 == 1:
+                scrapy_auction = scrapy_auction + data
+            else:
+                scrapy_data.append(data)
+            count = count + 1
+    naver = pool.map(scraping_data_naver, brand_list)
+    for data_naver in naver:
+        count = 0
+        for data in data_naver:
+            if count == 0:
+                scrapy_data.append(data)
+            elif count % 2 == 1:
+                scrapy_naver = scrapy_naver + data
+            else:
+                scrapy_data.append(data)
+            count = count + 1
+    pool = Pool(processes=4)
+    wemakeprice = pool.map(scraping_data_wemakeprice, brand_list)
+    for data_wemakeprice in wemakeprice:
+        count = 0
+        for data in data_wemakeprice:
+            if count == 0:
+                scrapy_data.append(data)
+            elif count % 2 == 1:
+                scrapy_wemakeprice = scrapy_wemakeprice + data
+            else:
+                scrapy_data.append(data)
+            count = count + 1
+
+    return scrapy_data, scrapy_auction, scrapy_naver, scrapy_wemakeprice
+
+def make_list(mall_name, brand_input1, item_input2, avr, havr, lavr, l_cost, compare_low_link, preference, margin):
+def make_list(mall_name, brand_input1, item_input2, avr, havr, lavr, l_cost, compare_low_link, preference, margin): #평균가격표 시트에 데이터를 입력할 리스트를 생성하는 루틴
+
+    new_list = []
+    new_list.append(mall_name)
+    new_list.append(brand_input1)
+    new_list.append(item_input2)
+    new_list.append(avr)
+    new_list.append(havr)
+    new_list.append(lavr)
+    new_list.append(l_cost)
+    new_list.append(compare_low_link)
+    new_list.append(preference)
+    new_list.append(margin)
+
+    return new_list
+
+def low_cost(scrapy_data_avr):
+def low_cost(scrapy_data_avr): #최저가를 구하는 루틴
+    scrapy_data_avr = sorted(scrapy_data_avr)
+    low_cost1 = scrapy_data_avr[0]
+    return low_cost1
+
+def low_avr(scrapy_data_avr1):
+def low_avr(scrapy_data_avr1): #하위 5~10%의 평균가를 구하는 루틴
+    sum12 = 0
+    scrapy_data_avr1 = sorted(scrapy_data_avr1)
+    low_a = len(scrapy_data_avr1)
+    low1 = low_a // 20
+    low2 = low_a // 10
+    dis = low2 - low1
+    if len(scrapy_data_avr1) == 1:
+        avr = scrapy_data_avr1[0]
+        return avr
+    else:
+        if low1 <= 1:
+            sum12 = scrapy_data_avr1[0] + scrapy_data_avr1[1]
+            avr = sum12 // 2
+            return avr
+        else:
+            for low1 in range(low1, low2):
+                data2 = int(scrapy_data_avr1[low1])
+                sum12 = sum12 + data2
+            avr = sum12 // dis
+        return avr
+
+def hight_avr(scrapy_data_avr2):
+def hight_avr(scrapy_data_avr2): #상위 5~10%의 평균을 구하는 루틴
+    sum13 = 0
+    scrapy_data_avr2 = sorted(scrapy_data_avr2)
+    hight = len(scrapy_data_avr2)
+    hight1 = hight - ( hight // 20 )
+    hight2 = hight - ( hight // 10 )
+    hight1 = hight - (hight // 20)
+    hight2 = hight - (hight // 10)
+    dis = hight1 - hight2
+    if len(scrapy_data_avr2) == 1:
+        avr = scrapy_data_avr2[0]
+        return avr
+    else:
+        if (hight // 20)  == 0:
+        if (hight // 20) == 0:
+            sum13 = scrapy_data_avr2[hight-1] + scrapy_data_avr2[hight-2]
+            avr = sum13 // 2
+            return avr
+        else:
+            for hight2 in range(hight2, hight1):
+                data1 = int(scrapy_data_avr2[hight2])
+                sum13 = sum13 + data1
+            avr = sum13 // dis
+            return avr
+def scraping_data_naver(brand_list):
+    scrapy_data_list = []
+    scrapy_data_cost = []
+    scrapy_data_link = []
+    new_list = []
+    new_list2 = []
+    error_list2 = []
+    deliv_cost = 3000
+    compare_low = 0
+    count = 0
+    count1 = 0
+    count2 = 0
+    count_link = 0
+    avr = 0
+    error = 0
+    preference = 0
+    margin = 0
+    mall_name = "Naver"
+    error_name = "검색한 아이템이 없습니다."
+    headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Safari/537.36'}
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Safari/537.36'}#네이버가 봇인지 탐지하지 못하도록 request 명령어에 추가할 헤더 선언.
+    item_input2 = brand_list[0]
+    brand_input1 = brand_list[1]
+    Wholesale_price = brand_list[2]
+
+    print("네이버", item_input2, "검색중")
+    req = requests.get(
+        'https://search.shopping.naver.com/search/all.nhn?origQuery=' + brand_input1 + '%20' + item_input2 + '&pagingIndex=1&pagingSize=40&viewType=list&sort=rel&frm=NVSHPAG&query=' + brand_input1 + '%20' + item_input2, headers = headers)
+    req = requests.get('https://search.shopping.naver.com/search/all.nhn?origQuery=' + brand_input1 + '%20' + item_input2 + '&pagingIndex=1&pagingSize=40&viewType=list&sort=rel&frm=NVSHPAG&query=' + brand_input1 + '%20' + item_input2, headers=headers)
+    html = req.text
+    soup = BeautifulSoup(html, 'html.parser')
+
+    non_search_text = soup.find_all('div', {'class': 'search_none'})
+    goods_list = soup.find_all('div', {'class': 'info'})
+    non_search_text = soup.find_all('div', {'class' : 'search_none'})
+    non_search_text = soup.find_all('div', {'class': 'search_none'}) #현재 판매중인 품목의 유무를 확인.
+    error_check = len(non_search_text)
+
+    if error_check == 0:
+        for inss in goods_list:
+        for inss in goods_list: #링크데이터 확인.
+            link_data = inss.a.get('href')
+            scrapy_data_link.append(link_data)
+            scrapy_data_link.append(link_data) #데이터 수집
+
+        item_cost_low = soup.select('div.info > span.price > em')
+        item_cost_low = soup.select('div.info > span.price > em') #가격데이터 확인
+        for item_cost_low in item_cost_low:
+            item_cost = item_cost_low.text
+            item_cost = re.findall(r"(\d+)", item_cost)
+            item_cost = ''.join(item_cost)
+            scrapy_data_cost.append(int(item_cost))
+            compare = int(item_cost)
+            scrapy_data_cost.append(int(item_cost)) #데이터 수집
+
+        delivery_cost = soup.find_all('div', {'class': 'info_mall'})
+        delivery_cost = soup.find_all('div', {'class': 'info_mall'}) #배송비데이터 확인
+        for delivery_cost in delivery_cost:
+            delivery = delivery_cost
+            delivery_cost0 = delivery_cost.text
+            delivery_cost1 = re.findall(r"배송비 무료", delivery_cost0)
+            delivery_cost2 = re.findall(r"배송비", delivery_cost0)
+            delivery_cost1 = ''.join(delivery_cost1)
+            delivery_cost2 = ''.join(delivery_cost2)
+            delivery_cost_check = len(delivery_cost1) + len(delivery_cost2)
+            if delivery_cost_check == 0:
+                link = delivery_cost.a.get('href')
+                req1 = requests.get(link, headers=headers)
+                html = req1.text
+                soup2 = BeautifulSoup(html, 'html.parser')
+                delivery_cost_plus = soup2.find('table', {'class': 'tbl_lst'})
+                if delivery_cost_plus == None:# 외부 페이지 판매의 경우 3000원으로 가정 후 저장
+                    scrapy_data_list.append(deliv_cost)
+                else:
+                    comparison_cost = soup2.select_one('div.price_area > span > em')# 최저가 저장값
+                    comparison_cost = comparison_cost.text
+                    comparison_cost = re.findall(r"(\d+)", comparison_cost)
+                    comparison_cost = ''.join(comparison_cost)
+                    c_cost = soup2.select("table > tbody > tr > td.price ")
+                    for c_cost in c_cost:# 판매페이지 세부가격 접근
+                        com_cost = c_cost.a.text
+                        com_cost = re.findall(r"(\d+)", com_cost)
+                        com_cost = ''.join(com_cost)
+                        count = count + 1
+                        if com_cost == comparison_cost:
+                            cost = soup2.select('table > tbody > tr > td.gift ')# 세부가격중 실제 최저가의 배송가격을 구하는 로직
+                            for cost in cost:
+                                count1 = count1 + 1
+                                cost = cost.text
+                                cost = re.findall(r"(\d+)", cost)
+                                cost = ''.join(cost)
+                                if count == count1:
+                                    if len(cost) == 0:
+                                        scrapy_data_list.append(0)# 배송비가 무료인 경우
+                                    else:
+                                        scrapy_data_list.append(int(cost))# 배송비가 있는 경우
+
+            elif delivery_cost_check == 3:
+            elif delivery_cost_check == 3: #지정배송비가 존재하는 경우
+                dil_cost = delivery_cost.em.text
+                dil_cost = re.findall(r"(\d+)", dil_cost)
+                dil_cost = ''.join(dil_cost)
+                scrapy_data_list.append(int(dil_cost))
+            elif delivery_cost_check == 9:
+                scrapy_data_list.append(0)# 배송비가 없는 상품을 위한 분기
+
+        if len(scrapy_data_list) <= len(scrapy_data_cost):
+        if len(scrapy_data_list) <= len(scrapy_data_cost): #리스트의 길이가 보다 짧은 리스트로 for문 수행
+            for list_count in scrapy_data_list:
+                sum_data = scrapy_data_list[count2] + scrapy_data_cost[count2]
+                sum_data = scrapy_data_list[count2] + scrapy_data_cost[count2] #물품 판매가격에 배송비를 더하여 최종가격을 구하는 부분
+                scrapy_data_list[count2] = sum_data
+                avr = avr + sum_data
+                count2 = count2 + 1
+        else:
+            for list_count in scrapy_data_cost:
+                sum_data = scrapy_data_list[count2] + scrapy_data_cost[count2]
+                sum_data = scrapy_data_list[count2] + scrapy_data_cost[count2] #물품 판매가격에 배송비를 더하여 최종가격을 구하는 부분
+                scrapy_data_list[count2] = sum_data
+                avr = avr + sum_data
+                count2 = count2 + 1
+
+        count2 = len(scrapy_data_list)
+        avr = avr // count2
+        havr = hight_avr(scrapy_data_list)
+        lavr = low_avr(scrapy_data_list)
+        l_cost = low_cost(scrapy_data_list)
+
+        margin = Margin_rate(l_cost, Wholesale_price)
+
+        link_index = scrapy_data_list.index(min(scrapy_data_list))
+        link = scrapy_data_link[link_index]
+        avr = avr // count2 #평균가
+        havr = hight_avr(scrapy_data_list) #상위 5~10% 평균가를 구하는 함수 호출
+        lavr = low_avr(scrapy_data_list) #하위 5~10% 평균가를 구하는 함수 호출
+        l_cost = low_cost(scrapy_data_list) #최저가를 구하는 함수 호출
+        margin = Margin_rate(l_cost, Wholesale_price) #마진율을 구하는 함수 호출
+        link_index = scrapy_data_list.index(min(scrapy_data_list)) #최저가의 링크가 있는 index값
+        link = scrapy_data_link[link_index] #최저가의 link를 구하는 루틴
+
+        list_count = 0
+
+        if len(scrapy_data_list) <= len(scrapy_data_link):
+        if len(scrapy_data_list) <= len(scrapy_data_link): #데이터링크와 데이터값중 보다 작은값을 활용해서 BACKDATA를 구하는 루틴
+            for scrapy_data in scrapy_data_list:
+                scrapy_data_cost = scrapy_data_list[list_count]
+                scrapy_data_new = scrapy_data_link[list_count]
+                new_list2.append((brand_input1, item_input2, scrapy_data_cost, scrapy_data_new))# 두번째 출력 배열
+                list_count = list_count + 1
+        else:
+            for scrapy_data in scrapy_data_link:
+                scrapy_data_cost = scrapy_data_list[list_count]
+                scrapy_data_new = scrapy_data_link[list_count]
+                new_list2.append((brand_input1, item_input2, scrapy_data_cost, scrapy_data_new))
+                list_count = list_count + 1
+
+        preference = len(new_list2)
+        preference = len(new_list2) #판매를 수행하고있는 판매처의 개수를 인기도로 반영
+        new_list = make_list(mall_name, brand_input1, item_input2, avr, havr, lavr, l_cost, link, preference, margin)# 첫번쨰 출력 배열
+        return new_list, new_list2
+
+    else:
+        error_text = brand_input1 + ' ' + item_input2
+        error_list = make_list(mall_name, error_name, error_text, error, error, error, error, error, error, error)# 첫번쨰 출력 배열
+        error_list2.append((error_name, error_text, error, error))
+        return error_list, error_list2
+def scraping_data_auction(brand_list):
+    scrapy_data_avr1 = []
+    delivery_cost_list = []
+    scrapy_link_data = []
+    new_list = []
+    new_list2 = []
+    error_list2 = []
+    error_name = "검색한 아이템이 없습니다."
+    mall_name = "Auction"
+    compare_low_link = "입력받지 못했습니다 : error"
+    count = 0
+    count1 = 0
+    count2 = 0
+    avr = 0
+    compare_low = 0
+    error_check = 0
+    error = 0
+    list_count = 0
+    preference = 0
+    margin = 0
+    headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Safari/537.36'}
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.157 Safari/537.36'}#네이버가 봇인지 탐지하지 못하도록 request 명령어에 추가할 헤더 선언.
+    item_input2 = brand_list[0]
+    brand_input1 = brand_list[1]
+    Wholesale_price = brand_list[2]
+
+    print("옥션", item_input2, "검색중")
+    reqa = requests.get('http://browse.auction.co.kr/search?keyword=' + brand_input1 + '+' + item_input2 + '&itemno=&nickname=&frm=hometab&dom=auction&isSuggestion=No&retry=&Fwk=' + brand_input1 + '+' + item_input2+ '&acode=SRP_SU_0100&arraycategory=&encKeyword=' + brand_input1 + '+' + item_input2, headers = headers)
+    reqa = requests.get('http://browse.auction.co.kr/search?keyword=' + brand_input1 + '+' + item_input2 + '&itemno=&nickname=&frm=hometab&dom=auction&isSuggestion=No&retry=&Fwk=' + brand_input1 + '+' + item_input2 + '&acode=SRP_SU_0100&arraycategory=&encKeyword=' + brand_input1 + '+' + item_input2, headers=headers)
+    html1 = reqa.text
+    soup= BeautifulSoup(html1, 'html.parser')
+    itemcard_info_major = soup.find_all('span', {'class': 'price_seller'})# 가격
+    itemcard_link = soup.find_all('div', {'class': 'section--itemcard_info'})# 최저가 링크
+    non_search_text = soup.find_all('div', {'class' : 'component component--no_result'})# 결과값이 없을때 에러발생
+    error_check = len(non_search_text)
+    item_cost_low = soup.select('div.section--itemcard_info_add > ul > li > span')
+
+    if error_check == 0:
+        for delivery in item_cost_low:
+        for delivery in item_cost_low: #배송비 데이터를 수집하는 구문.
+            delivery = delivery.text
+            if len(delivery) == 4:
+                delivery_cost = 0
+                delivery_cost_list.append(int(delivery_cost))
+            else:
+                delivery = re.findall(r"(\d+)", delivery)
+                delivery_cost = ''.join(delivery)
+                delivery_cost_list.append(int(delivery_cost))
+
+        for inss in itemcard_info_major:
+        for inss in itemcard_info_major: #물품 가격데이터를 수집하는 구문.
+            item = inss.strong.text
+            item = re.findall(r"(\d+)", item)
+            item = ''.join(item)
+            scrapy_data_avr1.append(int(item))
+
+
+        if len(delivery_cost_list) <= len(scrapy_data_avr1):
+        if len(delivery_cost_list) <= len(scrapy_data_avr1): #배송비 데이터에 따라 배송비와 물품 가격데이터를 더하는 구문. 보다 짧은 리스트를 이용하여 for문을 수행함.
+            for delivery_cost in delivery_cost_list:
+                sum_data =  delivery_cost_list[count] + scrapy_data_avr1[count]
+                scrapy_data_avr1[count] = sum_data
+                avr = avr + sum_data
+                compare = int(sum_data)
+                count = count + 1
+                if compare_low == 0:
+                    compare_low = compare
+                elif compare <= compare_low:
+                    compare_low = compare
+                    count1 = count
+        else:
+            for delivery_cost in scrapy_data_avr1:
+                sum_data =  delivery_cost_list[count] + scrapy_data_avr1[count]
+                scrapy_data_avr1[count] = sum_data
+                avr = avr + sum_data
+                compare = int(sum_data)
+                count = count + 1
+                if compare_low == 0:
+                    compare_low = compare
+                elif compare <= compare_low:
+                    compare_low = compare
+                    count1 = count
+        compare_low_link = itemcard_link[0].a.get('href')
+        for iss in itemcard_link:#최저가 링크
+            scrapy_link_data.append(iss.a.get('href'))
+            count2 = count2 + 1
+            if count1 == count2:
+                compare_low_link = iss.a.get('href')
+
+    else:
+    else: #옥션에 검색을 수행하였는데 물품을 판매중이지 않을때를 위한 분기
+        error_text = brand_input1 + ' ' + item_input2
+
+        error_list = make_list(mall_name, error_name, error_text, error, error, error, error, error, error, error)
+        error_list2.append((error_name, error_text, error, error))
+
+        return error_list, error_list2
+
+    div = len(scrapy_data_avr1)
+    avr = avr // div
+    havr = hight_avr(scrapy_data_avr1)
+    lavr = low_avr(scrapy_data_avr1)
+    l_cost = low_cost(scrapy_data_avr1)
+
+    margin = Margin_rate(l_cost, Wholesale_price)
+    avr = avr // div #평균가
+    havr = hight_avr(scrapy_data_avr1) #상위 5~10% 평균가를 구하는 함수 호출
+    lavr = low_avr(scrapy_data_avr1) #하위 5~10% 평균가를 구하는 함수 호출
+    l_cost = low_cost(scrapy_data_avr1) #최저가를 구하는 함수 호출
+    margin = Margin_rate(l_cost, Wholesale_price) #마진율을 구하는 함수 호출
+
+    if len(scrapy_data_avr1) <= len(scrapy_link_data):
+    if len(scrapy_data_avr1) <= len(scrapy_link_data): #데이터링크와 데이터값중 보다 작은값을 활용해서 BACKDATA를 구하는 루틴
+        for scrapy_data in scrapy_data_avr1:
+            scrapy_data_cost = scrapy_data_avr1[list_count]
+            scrapy_data_link = scrapy_link_data[list_count]
+            new_list2.append((brand_input1, item_input2, scrapy_data_cost, scrapy_data_link))# 두번째 출력 배열
+            list_count = list_count + 1
+    else:
+        for scrapy_data in scrapy_link_data:
+            scrapy_data_cost = scrapy_data_avr1[list_count]
+            scrapy_data_link = scrapy_link_data[list_count]
+            new_list2.append((brand_input1, item_input2, scrapy_data_cost, scrapy_data_link))
+            list_count = list_count + 1
+
+    preference = len(new_list2)#판매를 수행하고있는 판매처의 개수를 선호도로 반영
+    preference = len(new_list2) #판매를 수행하고있는 판매처의 개수를 인기도로 반영
+    new_list = make_list(mall_name, brand_input1, item_input2, avr, havr, lavr, l_cost, compare_low_link, preference, margin)
+    return new_list, new_list2
+
+def scraping_data_wemakeprice(brand_list):
+    scrapy_data_avr = []
+    scrapy_delivery_cost = []
+    scrapy_delivery_cost_link = []
+    scrapy_cost_data = []
+    new_list = []
+    new_list2 = []
+    error_list2 = []
+    function_call = []
+    delete_index = []
+    error_name = "검색한 아이템이 없습니다."
+    mall_name = "Wemakeprice"
+    list_count = 0
+    avr = 0
+    error = 0
+    margin = 0
+    preference = 0
+    low_link = "입력받지 못했습니다 : error"
+    item_input2 = brand_list[0]
+    brand_input1 = brand_list[1]
+    Wholesale_price = brand_list[2]
+
+    print("위메프", item_input2, "검색중")
+    options = webdriver.ChromeOptions()
+    options = webdriver.ChromeOptions() #창을 띄우지않고 chromedrive를 수행하는 옵션을 등록.
+    options.add_argument('headless')
+    options.add_argument('window-size=2560x1600')
+    options.add_argument("disable-gpu")
+    driver = webdriver.Chrome('chromedriver', chrome_options=options)
+    driver.get('http://search.wemakeprice.com/search?search_cate=top&search_keyword=' + brand_input1 + '+' + item_input2 + '&_service=5&_type=3')
+    html = driver.page_source
+    soup = BeautifulSoup(html, 'html.parser')
+    item_list_on_off = soup.select_one('h3.search_result_title')
+
+    item_list_on_off = item_list_on_off.text
+    item_list_on_off = soup.select_one('h3.search_result_title')
+    item_list_on_off = item_list_on_off.text #물품의 검색 결과가 존재하지 않을 경우를 확인하기 위한 데이터 수집.
+    item_list_on_off = re.findall(r"검색결과가", item_list_on_off)
+    item_list_on_off = ''.join(item_list_on_off)
+
+    if len(item_list_on_off) == 0:
+        item_cost_low = soup.select('div[data-container = dealResult] > div > div > a > div.conts_wrap > div.item_cont div.price_info > strong > em.num')#가격데이터 수집
+        item_cost_low = soup.select('div[data-container = dealResult] > div > div > a > div.conts_wrap > div.item_cont div.price_info > strong > em.num') #물품가격 데이터 수집
+        for item_cost_low in item_cost_low:
+            item_cost = item_cost_low.text
+            item_cost = re.findall(r"(\d+)", item_cost)
+            item_cost = ''.join(item_cost)
+            scrapy_data_avr.append(int(item_cost))
+
+        item_lowcost_link = soup.select('div[data-container = dealResult] > div > div > a')#링크주소 수집
+        item_lowcost_link = soup.select('div[data-container = dealResult] > div > div > a') #링크주소 수집
+        for item_lowcost in item_lowcost_link:
+            scrapy_delivery_cost_link.append(item_lowcost['href'])
+
+        item_delivery_cost = soup.select('div[data-container = dealResult] > div > div > a div.item_noti')
+        item_delivery_cost = soup.select('div[data-container = dealResult] > div > div > a div.item_noti') #배송비 책정여부, 배송비 발생조건을 확인하는 데이터를 수집
+        for item_delivery in item_delivery_cost:
+            delivery_cost = item_delivery.text
+            delivery_cost1 = re.findall(r"무료배송", delivery_cost)
+            delivery_cost2 = re.findall(r"(\d+)", delivery_cost)
+            delivery_cost1 = ''.join(delivery_cost1)
+            delivery_cost2 = ''.join(delivery_cost2)
+            delivery_cost_check = delivery_cost1 + str(delivery_cost2)
+            scrapy_delivery_cost.append(delivery_cost_check)
+
+    else:
+        driver.quit()
+        driver.quit() #물품을 검색하였을때 검색 데이터가 존재하지 않을 경우 분기하여 chromedriver를 종료하고 다음 물품을 검색.
+        error_text = brand_input1 + ' ' + item_input2
+
+        error_list = make_list(mall_name, error_name, error_text, error, error, error, error, error, error, error)
+        error_list2.append((error_name, error_text, error, error))
+
+        return error_list, error_list2
+
+    function_call.append(len(scrapy_data_avr))
+    function_call.append(len(scrapy_delivery_cost_link))
+    function_call.append(len(scrapy_delivery_cost))
+    function_call_index = function_call.index(min(function_call))
+    function_call_index = function_call.index(min(function_call)) #가격데이터와 링크데이터, 배송비조건데이터의 리스트 중 가장 작은 인자를 가지고있는 리스트로 for문을 수행.
+
+    if function_call_index == 0:
+        scraping = scrapy_data_avr
+    elif function_call_index == 1:
+        scraping = scrapy_delivery_cost_link
+    elif function_call_index == 2:
+        scraping = scrapy_delivery_cost
+    index = len(scraping)
+    count = 0
+    for item_search_index in range(1, index + 1):
+        time.sleep(1)
+        link_data = scrapy_delivery_cost_link[count]
+        link_data_parsing = re.findall(r"/product/", link_data)
+        link_data_parsing_A = re.findall(r"/deal/", link_data)
+        link_data_parsing_B = re.findall(r"/adeal/", link_data)
+        link_data_parsing = ''.join(link_data_parsing)
+        link_data_parsing_A = ''.join(link_data_parsing_A)
+        link_data_parsing_B = ''.join(link_data_parsing_B)
+        link_data = len(link_data_parsing) + len(link_data_parsing_A) + len(link_data_parsing_B)
+        link_data = len(link_data_parsing) + len(link_data_parsing_A) + len(link_data_parsing_B) #페이지의 형태를 확인하여 각 페이지에 따라 데이터를 수집하는 방식을 별도로 수행하기 위해 페이지의 형태를 확인하기위한 변수를 생성하는 구문.
+
+        delivery_cost = scrapy_delivery_cost[count]
+        delivery_cost_A = re.findall(r"무료배송", delivery_cost)
+        delivery_cost_B = re.findall(r"(\d+)", delivery_cost)
+        link_data_parsing_A = ''.join(delivery_cost_A)
+        link_data_parsing_B = ''.join(delivery_cost_B)
+        delivery_cost = str(link_data_parsing_A) + str(link_data_parsing_B)
+        delivery_cost = str(link_data_parsing_A) + str(link_data_parsing_B) #배송비가 존재하는지 조건이 무엇인지, 무료배송인지를 확인하기위한 변수를 생성하는 구문.
+
+        selling_point = driver.find_element_by_xpath('//*[@id="_contents"]/div[1]/div[2]/div[4]/div[2]/div[1]/div/a[' + str(item_search_index) + ']')
+        selling_point = driver.find_element_by_xpath('//*[@id="_contents"]/div[1]/div[2]/div[4]/div[2]/div[1]/div/a[' + str(item_search_index) + ']') #판매 상세페이지를 접근하는 구문. 첫번째 a태그부터 마지막 a태그까지 순차적으로 접근.
+        driver.execute_script("arguments[0].scrollIntoView();", selling_point)
+        selling_point.click()
+        driver.switch_to.window(driver.window_handles[1])
+        driver.switch_to.window(driver.window_handles[1]) #새로운 팝업창으로 판매상세페이지를 띄우기 때문에 driver의 위치를 새창으로 switch하는 구문
+        time.sleep(1)
+        if link_data == 9:
+        if link_data == 9: #상세페이지의 형태가 단일상품 판매페이지('product')일 경우를 위한 분기문
+            time.sleep(4)
+            driver, item_cost = wemakeprice_item(driver, delivery_cost, scrapy_data_avr[count])
+            scrapy_cost_data.append(int(item_cost))
+            driver, item_cost = wemakeprice_item(driver, delivery_cost, scrapy_data_avr[count]) #단일상품 판매페이지를 위한 데이터수집 함수 호출
+            scrapy_cost_data.append(int(item_cost)) #별도 리스트를 생성해서 데이터를 입력.
+
+        elif link_data == 6:
+        elif link_data == 6: #상세페이지의 형태가 옵션리스트 1개를 가지는 판매페이지('/deal/')일 경우를 위한 분기문
+            time.sleep(4)
+            driver, item_cost = wemakeprice_list1(driver, delivery_cost, item_input2)
+            scrapy_cost_data.append(int(item_cost))
+            driver, item_cost = wemakeprice_list1(driver, delivery_cost, item_input2) #옵션리스트가 1개를 가지는 판매페이지를 위한 데이터수집 함수 호출
+            scrapy_cost_data.append(int(item_cost)) #별도 리스트를 생성해서 데이터를 입력.
+
+        elif link_data == 13:
+        elif link_data == 13: #상세페이지의 형태가 옵션리스트 2개를 가지는 판매페이지('/deal/, /adeal/')일 경우를 위한 분기문
+            time.sleep(13)
+            driver, item_cost = wemakeprice_list2(driver, delivery_cost, item_input2)
+            scrapy_cost_data.append(int(item_cost))
+            driver, item_cost = wemakeprice_list2(driver, delivery_cost, item_input2) #옵션리스트가 2개를 가지는 판매페이지를 위한 데이터수집 함수 호출
+            scrapy_cost_data.append(int(item_cost)) #별도 리스트를 생성해서 데이터를 입력.
+
+        driver.close()
+        driver.switch_to.window(driver.window_handles[0])
+        driver.switch_to.window(driver.window_handles[0])#새로운 팝업창에서 데이터 수집을 종료하였기 때문에 driver의 위치를 기존의 판매목록창으로 switch하는 구문
+        count = count + 1
+    driver.quit()
+    driver.quit() #데이터의 수집을 완료하고 종료
+
+    list_index_count = 0
+    for cost_data in scrapy_cost_data:
+        avr = avr + cost_data
+        if cost_data == 0:
+            del scrapy_cost_data[list_index_count], scrapy_delivery_cost_link[list_index_count]
+        list_index_count = list_index_count + 1
+            delete_index.append(list_index_count) #품절되거나 판매페이지에서 검색물품을 판매하지 않을경우 0을 반환하기 때문에 가격 데이터가 0인 경우를 index를 확인하여 예외처리를 실행하기 위한 구문
+            list_index_count = list_index_count + 1
+        else:
+            list_index_count = list_index_count + 1
+
+    for index in delete_index:
+        real_index = index - delete_index.index(index) #가격데이터가 0인 index는 차례로 삭제되어 1씩 감소하기 때문에 해당 리스트의 index값을 인자 값에서 감소시키면 차례로 감소되어 변화하는 index를 제대로 접근할 수 있도록 하는 구문
+        del scrapy_cost_data[real_index], scrapy_delivery_cost_link[real_index] #물품의 가격데이터와 판매상세페이지에 접근하기위한 링크주소 삭제
+
+    if len(scrapy_cost_data) == 0:
+    if len(scrapy_cost_data) == 0: #모든 가격데이터가 0이어서 더이상 판매물품이 존재하지 않을경우 에러조건으로 분기
+        error_text = brand_input1 + ' ' + item_input2
+        error_list = make_list(mall_name, error_name, error_text, error, error, error, error, error, error, error)
+        error_list2.append((error_name, error_text, error, error))
+        return error_list, error_list2
+
+    div = len(scrapy_cost_data)
+    avr = avr // div
+    print(scrapy_cost_data)
+
+    havr = hight_avr(scrapy_cost_data)
+    lavr = low_avr(scrapy_cost_data)
+    l_cost = low_cost(scrapy_cost_data)
+
+    low_link_index = scrapy_cost_data.index(min(scrapy_cost_data))
+    low_link = scrapy_delivery_cost_link[low_link_index]
+
+    if l_cost != 0:
+    avr = avr // div #평균가
+    havr = hight_avr(scrapy_cost_data) #상위 5~10% 평균가를 구하는 함수 호출
+    lavr = low_avr(scrapy_cost_data) #하위 5~10% 평균가를 구하는 함수 호출
+    l_cost = low_cost(scrapy_cost_data) #최저가를 구하는 함수 호출
+    low_link_index = scrapy_cost_data.index(min(scrapy_cost_data)) #최저가 링크의 index를 구하는 구문
+    low_link = scrapy_delivery_cost_link[low_link_index] #최저가의 링크를 구하는 구문
+
+    if l_cost != 0: #만약 최저가가 0일경우를 위한 예외처리 구문
+        margin = Margin_rate(l_cost, Wholesale_price)
+
+    for scrapy_data in scrapy_cost_data:
+    for scrapy_data in scrapy_cost_data: #BACKDATA를 생성하는 루틴
+        scrapy_data_cost = scrapy_cost_data[list_count]
+        scrapy_data_link = scrapy_delivery_cost_link[list_count]
+        list_count = list_count + 1
+        new_list2.append((brand_input1, item_input2, scrapy_data_cost, scrapy_data_link))  # 두번째 출력 배열
+        new_list2.append((brand_input1, item_input2, scrapy_data_cost, scrapy_data_link))  #두번째 출력 배열
+
+    preference = len(new_list2)
+    new_list = make_list(mall_name, brand_input1, item_input2, avr, havr, lavr, l_cost, low_link, preference, margin)  # 첫번째 출력 배열
+    preference = len(new_list2) #판매를 수행하고있는 판매처의 개수를 인기도로 반영
+    new_list = make_list(mall_name, brand_input1, item_input2, avr, havr, lavr, l_cost, low_link, preference, margin)  #첫번째 출력 배열
+    return new_list, new_list2
+
+def CALL_SCRAPING(DATA_FILE_PATH, FILE_PATH):
+    end_message = "정상종료"
+    brand_list = []
+    scrapy_data_list = []
+    scrapy_auction_list = []
+    scrapy_naver_list = []
+    scrapy_wemakeprice_list = []
+    margin_data_list = []
+    excel = openpyxl.load_workbook(DATA_FILE_PATH)
+    scrapy_excel = excel.active
+
+    now = time.localtime()
+    now_time = "%04d-%02d-%02d %02d시%02d분%02d초" % (now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
+    SAVE_FILE_PATH = FILE_PATH + '/' + now_time + '_Scraping_Data.xlsx'
+    SAVE_FILE_PATH = FILE_PATH + '/' + now_time + '_Scraping_Data.xlsx' #데이터를 입력할 엑셀파일주소 생성.
+
+    excel = openpyxl.load_workbook(DATA_FILE_PATH)
+    scrapy_excel = excel.active
+    for item in scrapy_excel.rows:
+        item_list = []
+        item_list.append(item[0].value)
+        item_list.append(item[1].value)
+        item_list.append(item[2].value)
+        sum_item = item_list
+        brand_list.append(sum_item)
+    excel.close()
+
+    remnant_item = len(brand_list) % 4
+    Regular_item = int(len(brand_list) / 4)
+    Regular_item = int(len(brand_list) / 4) #입력된 물품의 수가 4개씩 나누어서 몇인지 확인해서 몇번 반복해서 데이터 수집루틴을 실행해야하는지 확인할 때 사용하는 변수.
+    remnant_item = len(brand_list) % 4 #입력된 물품수를 4로 나누고 남은 나머지 만큼의 물품을 호출하는것.
+
+    list_index = 0
+    out = 0
+    while out < Regular_item:
+        inner = 0
+        serch_list = []
+        wholesale_price_list = []
+        while inner < 4:
+        while inner < 4: #4개씩 물품리스트 분할
+            serch_list.append(brand_list[0])
+            del brand_list[0]
+            inner = inner + 1
+        out = out + 1
+        scrapy_data, scrapy_auction, scrapy_naver, scrapy_wemakeprice = scraping(serch_list)
+        #마진율 리스트가 생성되는 함수가 삽입될 공간.
+        print(scrapy_data, serch_list)
+        margin_list = make_margin_list_4(scrapy_data, serch_list)
+
+        scrapy_data_list = scrapy_data_list + scrapy_data
+        scrapy_data_list = add_Purchase_priority(scrapy_data_list)
+        scrapy_auction_list = scrapy_auction_list + scrapy_auction
+        scrapy_naver_list = scrapy_naver_list + scrapy_naver
+        scrapy_wemakeprice_list = scrapy_wemakeprice_list + scrapy_wemakeprice
+        scrapy_data, scrapy_auction, scrapy_naver, scrapy_wemakeprice = scraping(serch_list) #스크래핑 함수 호출
+
+        margin_list = make_margin_list_4(scrapy_data, serch_list) #검색물품이 4개인 마진리스트 생성함수 호출
+        margin_data_list = margin_data_list + margin_list #데이터 stock
+        margin_data_list = add_Purchase_priority(margin_data_list) #매입 우선순위를 더하는 함수 호출
+
+        scrapy_data_list = scrapy_data_list + scrapy_data #데이터 stock
+        scrapy_auction_list = scrapy_auction_list + scrapy_auction #데이터 stock
+        scrapy_naver_list = scrapy_naver_list + scrapy_naver #데이터 stock
+        scrapy_wemakeprice_list = scrapy_wemakeprice_list + scrapy_wemakeprice #데이터 stock
+        CREATE_xlsx(SAVE_FILE_PATH, margin_data_list, scrapy_data_list, scrapy_auction_list, scrapy_naver_list, scrapy_wemakeprice_list)
+        #아이템을 4개 검색할때 마다 데이터를 저장해서 중간에 데이터 수집이 중단되어도 데이터가 삭제되지 않도록 함수 호출.
+
+    if remnant_item > 0:
+        serch_list = []
+        for item_remnant_list in brand_list:
+        for item_remnant_list in brand_list: #나머지 남은 물품을 리스트에 저장해서 검색함수를 호출하는 구문
+            serch_list.append(item_remnant_list)
+            wholesale_price_list.append(item_remnant_list[2])
+        scrapy_data, scrapy_auction, scrapy_naver, scrapy_wemakeprice = scraping(serch_list)
+        #마진율 리스트 생성되는 함수가 삽입될 공간
+        if len(scrapy_data) == 3:
+            margin_list = make_margin_list_1(scrapy_data, wholesale_price_list)
+        elif len(scrapy_data) == 6:
+            margin_list = make_margin_list_2(scrapy_data, wholesale_price_list)
+        elif len(scrapy_data) == 9:
+            margin_list = make_margin_list_3(scrapy_data, wholesale_price_list)
+
+        margin_data_list = margin_data_list + margin_list
+        margin_data_list = add_Purchase_priority(margin_data_list)
+        scrapy_data_list = scrapy_data_list + scrapy_data
+        scrapy_auction_list = scrapy_auction_list + scrapy_auction
+        scrapy_naver_list = scrapy_naver_list + scrapy_naver
+        scrapy_wemakeprice_list = scrapy_wemakeprice_list + scrapy_wemakeprice
+        CREATE_xlsx(SAVE_FILE_PATH, margin_data_list, scrapy_data_list, scrapy_auction_list, scrapy_naver_list, scrapy_wemakeprice_list)
+
+        if len(scrapy_data) == 3: #검색된 데이터의 개수가 1개이여서 검색된 데이터가 3개일 경우 마진리스트를 1개만 생성하는 함수 호출
+            margin_list = make_margin_list_1(scrapy_data, serch_list)
+        elif len(scrapy_data) == 6: #검색된 데이터의 개수가 2개이여서 검색된 데이터가 6개일 경우 마진리스트를 1개만 생성하는 함수 호출
+            margin_list = make_margin_list_2(scrapy_data, serch_list)
+        elif len(scrapy_data) == 9: #검색된 데이터의 개수가 3개이여서 검색된 데이터가 9개일 경우 마진리스트를 1개만 생성하는 함수 호출
+            margin_list = make_margin_list_3(scrapy_data, serch_list)
+
+        margin_data_list = margin_data_list + margin_list #데이터 stock
+        margin_data_list = add_Purchase_priority(margin_data_list) #
+
+        scrapy_data_list = scrapy_data_list + scrapy_data #데이터 stock
+        scrapy_auction_list = scrapy_auction_list + scrapy_auction #데이터 stock
+        scrapy_naver_list = scrapy_naver_list + scrapy_naver #데이터 stock
+        scrapy_wemakeprice_list = scrapy_wemakeprice_list + scrapy_wemakeprice #데이터 stock
+        CREATE_xlsx(SAVE_FILE_PATH, margin_data_list, scrapy_data_list, scrapy_auction_list, scrapy_naver_list, scrapy_wemakeprice_list) #엑셀에 데이터를 마지막으로 삽입하는 함수 호출.
+
+    return end_message
+
+def CREATE_xlsx(SAVE_FILE_PATH, margin_data_list, scrapy_data_list, scrapy_auction_list, scrapy_naver_list, scrapy_wemakeprice_list):
+    writer = pd.ExcelWriter(SAVE_FILE_PATH)
+
+    sheet = "마진율계산"
+    sheet = "마진율"
+    price = DataFrame(np.vstack(margin_data_list), columns=["이미지", "브랜드", "제품명", "매입가", "판매처", "최저가", "인기도", "마진율", "판매처", "최저가", "인기도", "마진율", "판매처", "최저가", "인기도", "마진율", "평균인기도", "평균마진율", "매입우선순위"])
+    price.to_excel(writer, sheet)
+
+    sheet1 = "평균가격표"
+    price1 = DataFrame(np.vstack(scrapy_data_list), columns=["판매처", "브랜드", "제품명", "평균가격", "상위5~10% 평균가격", "하위 5~10% 평균가격", "최저가", "최저가 링크", "인기도", "마진율"])
+    price1.to_excel(writer, sheet1)
+
+    sheet2 = "네이버가격표"
+    sheet2 = "옥션가격표"
+    price2 = DataFrame(np.vstack(scrapy_auction_list), columns=["브랜드", "제품명", "판매가", "링크"])
+    price2.to_excel(writer, sheet2)
+
+    sheet3 = "옥션가격표"
+    sheet3 = "네이버가격표"
+    price3 = DataFrame(np.vstack(scrapy_naver_list), columns=["브랜드", "제품명", "판매가", "링크"])
+    price3.to_excel(writer, sheet3)
+
+    sheet4 = "위메프가격표"
+    price4 = DataFrame(np.vstack(scrapy_wemakeprice_list), columns=["브랜드", "제품명", "판매가", "링크"])
+    price4.to_excel(writer, sheet4)
+    writer.close()
